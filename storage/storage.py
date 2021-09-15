@@ -40,27 +40,29 @@ class Storage(object):
         # 用来记录该状态是否为结束状态, 0表示结束, 1表示正常
         self.masks_vec = np.ones((num_workers, n_steps+1, 1))
 
-        self.worker_step_map = {i: 0 for i in range(num_workers)}
-
         self.max_step = n_steps
         self.num_workers = num_workers
 
-    def push(self, worker, obs, action, hidden_state, reward, value, log_probs, mask):
-        step_ = self.worker_step_map[worker]
-        self.obs_vec[worker, step_+1] = obs
-        self.actions_vec[worker, step_] = action
-        self.hidden_states_vec[worker, step_+1] = hidden_state
-        self.rewards_vec[worker, step_] = reward
-        self.values_vec[worker, step_] = value
-        self.log_probs_vec[worker, step_] = log_probs
-        self.masks_vec[worker, step_+1] = mask
+        self.step = 0
 
-        self.worker_step_map[worker] = (self.worker_step_map[worker] + 1) % self.max_step
+    def push(self, obs, action, hidden_state, reward, value, log_probs, masks):
+        # 处理一下数据形式
+        reward = reward.reshape(reward.shape[0], 1)
+        masks = masks.reshape(masks.shape[0], 1)
+        self.obs_vec[:, self.step+1] = obs
+        self.actions_vec[:, self.step] = action
+        self.hidden_states_vec[:, self.step+1] = hidden_state
+        self.rewards_vec[:, self.step] = reward
+        self.values_vec[:, self.step] = value
+        self.log_probs_vec[:, self.step] = log_probs
+        self.masks_vec[:, self.step+1] = masks
 
-    def retrive_act_data(self, worker, step):
-        obs = self.obs_vec[worker, step]
-        hidden_state = self.hidden_states_vec[worker, step]
-        mask = self.masks_vec[worker, step]
+        self.step = (self.step+1) % self.max_step
+
+    def retrive_act_data(self, step):
+        obs = self.obs_vec[:, step]
+        hidden_state = self.hidden_states_vec[:, step]
+        mask = self.masks_vec[:, step]
 
         return func_n2t((obs, hidden_state, mask))
 
