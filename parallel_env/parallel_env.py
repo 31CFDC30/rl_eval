@@ -128,7 +128,7 @@ def make_parallel_envs(env_name, num_workers):
     # for p in p_list:
     #     p.join()
 
-    return pipe_list
+    return PEnv(pipe_list)
 
 
 if __name__ == '__main__':
