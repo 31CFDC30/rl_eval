@@ -51,6 +51,8 @@ def main(args):
 
     num_updates = int(args.num_env_steps) // args.num_steps // args.num_workers
 
+    episode = 0
+
     for num_update_ in range(num_updates):
 
         for step_ in range(args.num_steps):
@@ -69,11 +71,16 @@ def main(args):
             values = actor_critic.get_value(*storage.retrive_act_data(args.num_steps))
 
         storage.values_vec[:, -1] = values.numpy()
+
         alg.update(storage)
 
         storage.after_update()
 
-        print(num_update_, storage.rewards_vec.mean())
+        i = num_update_ + 1
+
+        if i * args.num_steps % args.episode_length == 0:
+            episode += 1
+            print("Episode: {}, reward: {}".format(episode, rewards.mean()))
 
     env.close()
 
@@ -88,7 +95,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--env_name", type=str, default="MountainCarContinuous-v0")
 
-    parser.add_argument("--num_workers", type=int, default=4)
+    parser.add_argument("--num_workers", type=int, default=8)
 
     parser.add_argument("--num_steps", type=int, default=10)
 
@@ -98,7 +105,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--lr", type=float, default=7e-4)
 
-    parser.add_argument("--mini_batch_size", type=int, default=5)
+    parser.add_argument("--mini_batch_size", type=int, default=32)
 
     parser.add_argument("--clip_eps", type=float, default=0.2)
 
@@ -109,6 +116,8 @@ if __name__ == '__main__':
     parser.add_argument("--update_epochs", type=int, default=5)
 
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
+
+    parser.add_argument("--episode_length", type=int, default=200)
 
     parser.add_argument("--log_file", type=str, default="/home/catsled/RL/log/1.log")
 
