@@ -23,32 +23,39 @@ class Storage(object):
         :param num_workers:
         :param n_steps:
         """
+        # 该属性用来保存观测值，预留出一个是为了在此基础上继续探索
         self.obs_vec = np.zeros((num_workers, n_steps+1, *obs_shape))
-        self.actions_vec = np.zeros((num_workers, n_steps, *action_shape))
         self.hidden_states_vec = np.zeros((num_workers, n_steps+1, *hidden_state_shape))
-        self.rewards_vec = np.zeros((num_workers, n_steps, 1))
 
-        # 这里是critic学习的value值
-        self.values_vec = np.zeros((num_workers, n_steps+1, 1))
+        # 只有执行action才能获得reward
+        self.actions_vec = np.zeros((num_workers, n_steps, *action_shape))
+        self.rewards_vec = np.zeros((num_workers, n_steps, 1))
 
         # 这个log_prob可以通过.exp转换为prob.
         self.log_probs_vec = np.zeros((num_workers, n_steps, 1))
 
+        # 这里是critic学习的value值
+        self.values_vec = np.zeros((num_workers, n_steps+1, 1))
+
         # 使用reward计算得到的returns: r_t = r_{t+1} + ... + ...
-        self.returns_vec = np.zeros((num_workers, n_steps, 1))
+        self.returns_vec = np.zeros((num_workers, n_steps+1, 1))
 
         # 用来记录该状态是否为结束状态, 0表示结束, 1表示正常
         self.masks_vec = np.ones((num_workers, n_steps+1, 1))
+
+        # 用来记录该状态是否为结束状态, 0表示结束, 1表示正常, 到达指定步数
+        self.bad_masks_vec = np.ones((num_workers, n_steps+1, 1))
 
         self.max_step = n_steps
         self.num_workers = num_workers
 
         self.step = 0
 
-    def push(self, obs, action, hidden_state, reward, value, log_probs, masks):
+    def push(self, obs, action, hidden_state, reward, value, log_probs, masks, bad_masks):
         # 处理一下数据形式
         reward = reward.reshape(reward.shape[0], 1)
         masks = masks.reshape(masks.shape[0], 1)
+        bad_masks = bad_masks.reshape(bad_masks.shape[0], 1)
         self.obs_vec[:, self.step+1] = obs
         self.actions_vec[:, self.step] = action
         self.hidden_states_vec[:, self.step+1] = hidden_state
@@ -56,6 +63,7 @@ class Storage(object):
         self.values_vec[:, self.step] = value
         self.log_probs_vec[:, self.step] = log_probs
         self.masks_vec[:, self.step+1] = masks
+        self.bad_masks_vec[:, self.step+1] = bad_masks
 
         self.step = (self.step+1) % self.max_step
 
@@ -70,6 +78,7 @@ class Storage(object):
         self.obs_vec[:, 0] = self.obs_vec[:, -1]
         self.hidden_states_vec[:, 0] = self.hidden_states_vec[:, -1]
         self.masks_vec[:, 0] = self.masks_vec[:, -1]
+        self.bad_masks_vec[:, 0] = self.bad_masks_vec[:, -1]
 
     def cal_returns(self,
                     gamma: float,
@@ -84,14 +93,14 @@ class Storage(object):
         :return:
         """
         gae = np.zeros((self.num_workers, 1))
-        self.returns_vec[:, -1] = t_values
+        self.values_vec[:, -1] = t_values
 
         for step_ in reversed(range(self.max_step)):
             delta = self.rewards_vec[:, step_] + \
                     gamma * self.values_vec[:, step_+1] * self.masks_vec[:, step_+1] - self.values_vec[:, step_]
 
             gae = delta + gamma * gae_lambda * gae * self.masks_vec[:, step_+1]
-
+            gae = gae * self.bad_masks_vec[:, step_+1]
             self.returns_vec[:, step_] = gae + self.values_vec[:, step_]
 
     def sample_generator(self,

@@ -50,7 +50,7 @@ class PPO(object):
         """
         storage.cal_returns(gamma, gae_lambda, storage.values_vec[:, -1])
 
-        advantage_vec = storage.returns_vec - storage.values_vec[:, :-1]
+        advantage_vec = storage.returns_vec[:, :-1] - storage.values_vec[:, :-1]
         # 标准化
         advantage_vec = (advantage_vec - advantage_vec.mean()) / (advantage_vec.std() + 1e-5)
 

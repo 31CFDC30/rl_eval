@@ -21,6 +21,7 @@ from ac.ac import AC
 def main(args):
 
     env = func_generate_env(args.env_name)
+
     envs = make_parallel_envs(args.env_name, args.num_workers)
     obs_shape, action_shape, action_type = func_env_infos(env)
 
@@ -47,7 +48,9 @@ def main(args):
     storage = Storage(obs_shape, action_shape, hidden_state_shape, args.num_workers,
                       args.num_steps)
 
-    storage.obs_vec[:, 0] = envs.reset()  # : 所有workers, 0 第一步.
+    # : 所有workers, 0 第一步， 初始化状态必不为结束状态。
+    # 此时，对应的mask应该为1-> done 为False
+    storage.obs_vec[:, 0] = envs.reset()
 
     num_updates = int(args.num_env_steps) // args.num_steps // args.num_workers
 
@@ -58,16 +61,21 @@ def main(args):
         for step_ in range(args.num_steps):
             # env.render()
             with torch.no_grad():  # 采样, h_n 为当前状态的h_n
+                # 执行动作时，由于在采样部分，我们丢弃了结束状态，所以可以直接执行，而不用担心是否在结束状态执行动作。
+                # 但是，需要确定其hidden_state是否为零。
+                # 在开始时，mask为1，但是初始化的hidden_state为零，所以其为0
                 values, actions, h_ns, log_probs = actor_critic.act(*storage.retrive_act_data(step_))
 
             next_obs, rewards, dones, infos = envs.step(actions.numpy())  # 这里的数据已经排序完成
 
             masks = np.array([0. if done else 1. for done in dones])
+            bad_masks = np.array([0. if 'bad_transition' in info.keys() else 1. for info in infos])  # 最大步数限制
 
             storage.push(next_obs, actions.numpy(), h_ns.numpy(),
-                         rewards, values.numpy(), log_probs.numpy(), masks)
+                         rewards, values.numpy(), log_probs.numpy(), masks, bad_masks)
 
         with torch.no_grad():
+            # 获取storage中最后一个状态的value
             values = actor_critic.get_value(*storage.retrive_act_data(args.num_steps))
 
         storage.values_vec[:, -1] = values.numpy()
@@ -117,7 +125,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
 
-    parser.add_argument("--episode_length", type=int, default=200)
+    parser.add_argument("--episode_length", type=int, default=1000)
 
     parser.add_argument("--log_file", type=str, default="/home/catsled/RL/log/1.log")
 
