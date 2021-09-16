@@ -122,7 +122,7 @@ class Storage(object):
             actions_batch = self.actions_vec.reshape(-1, *self.actions_vec.shape[2:])[indices]
 
             values_batch = self.values_vec[:, :-1].reshape(-1, *self.values_vec.shape[2:])[indices]
-            returns_batch = self.returns_vec.reshape(-1, *self.returns_vec.shape[2:])[indices]
+            returns_batch = self.returns_vec[:, :-1].reshape(-1, *self.returns_vec.shape[2:])[indices]
             masks_batch = self.masks_vec[:, :-1].reshape(-1, *self.masks_vec.shape[2:])[indices]
 
             old_action_log_probs_batch = self.log_probs_vec.reshape(-1, *self.log_probs_vec.shape[2:])[indices]
