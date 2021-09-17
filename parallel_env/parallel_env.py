@@ -35,7 +35,6 @@ class PEnv(object):
         ob_list = []
         for i in range(len(obe_list)):
             ob_list.append(obe_list[i][1])
-
         return np.array(ob_list)
 
     def _reset(self, pipe):
@@ -104,6 +103,7 @@ def worker(pipe, remote_pipe, env, eid):
                 pipe.send((eid, [next_ob, reward, done, info]))
             elif cmd == "render":
                 env.render()
+                pipe.send((eid, None))
             elif cmd == "close":
                 pipe.close()
                 break
@@ -131,9 +131,6 @@ def make_parallel_envs(env_name, num_workers):
         pipes[ind][1].close()
         p_list.append(p)
         pipe_list.append(pipes[ind][0])
-
-    # for p in p_list:
-    #     p.join()
 
     return PEnv(pipe_list)
 

@@ -10,6 +10,20 @@ from torch.distributions import Normal, Categorical
 from functools import reduce
 
 
+class AddBias(nn.Module):
+    def __init__(self, bias):
+        super(AddBias, self).__init__()
+        self._bias = nn.Parameter(bias.unsqueeze(1))
+
+    def forward(self, x):
+        if x.dim() == 2:
+            bias = self._bias.t().view(1, -1)
+        else:
+            bias = self._bias.t().view(1, -1, 1, 1)
+
+        return x + bias
+
+
 class FixedNormal(Normal):
 
     def log_probs(self, actions):
@@ -42,15 +56,17 @@ class Gaussian(nn.Module):
 
         self.action_mean_fc = init_(nn.Linear(self.input_size, self.output_size))
 
-        self.action_logstd = nn.Parameter(torch.zeros(self.output_size))
+        # self.action_logstd = nn.Parameter(torch.zeros(self.output_size), requires_grad=True)
+        self.action_logstd = AddBias(torch.zeros(self.output_size))
 
     def forward(self, x):
 
         x = x.view(-1, self.input_size)
 
         action_mean = self.action_mean_fc(x)
-
-        return FixedNormal(action_mean, self.action_logstd.exp())
+        zeros = torch.zeros(action_mean.size())
+        action_logstd = self.action_logstd(zeros)
+        return FixedNormal(action_mean, action_logstd.exp())
 
 
 if __name__ == '__main__':

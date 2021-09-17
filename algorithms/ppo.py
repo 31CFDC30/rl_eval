@@ -40,7 +40,7 @@ class PPO(object):
 
         self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=lr, eps=eps)
 
-    def update(self, storage, gamma=0.99, gae_lambda=0.96):
+    def update(self, storage, gamma=0.99, gae_lambda=0.95):
         """
         storage中的所有数据为ndarray格式. 每个数据的shape: (num_works, steps, *data_shape).
         :param storage:

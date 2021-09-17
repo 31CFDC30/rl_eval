@@ -96,11 +96,14 @@ class Storage(object):
         self.values_vec[:, -1] = t_values
 
         for step_ in reversed(range(self.max_step)):
+            # 如果下一步为终止状态，则其对应的V(s_{t+1})为0， 这里通过masks控制。
             delta = self.rewards_vec[:, step_] + \
                     gamma * self.values_vec[:, step_+1] * self.masks_vec[:, step_+1] - self.values_vec[:, step_]
 
+            # 此处的masks作用是分离终止状态处的delta。
             gae = delta + gamma * gae_lambda * gae * self.masks_vec[:, step_+1]
             gae = gae * self.bad_masks_vec[:, step_+1]
+            # 此处的returns即为A+V,其中gae为A
             self.returns_vec[:, step_] = gae + self.values_vec[:, step_]
 
     def sample_generator(self,

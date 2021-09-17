@@ -51,15 +51,14 @@ def main(args):
     # : 所有workers, 0 第一步， 初始化状态必不为结束状态。
     # 此时，对应的mask应该为1-> done 为False
     storage.obs_vec[:, 0] = envs.reset()
-
+    # exit()
     num_updates = int(args.num_env_steps) // args.num_steps // args.num_workers
 
     episode = 0
 
     for num_update_ in range(num_updates):
-
         for step_ in range(args.num_steps):
-            # env.render()
+            # envs.render()
             with torch.no_grad():  # 采样, h_n 为当前状态的h_n
                 # 执行动作时，由于在采样部分，我们丢弃了结束状态，所以可以直接执行，而不用担心是否在结束状态执行动作。
                 # 但是，需要确定其hidden_state是否为零。
@@ -76,7 +75,7 @@ def main(args):
 
         with torch.no_grad():
             # 获取storage中最后一个状态的value
-            values = actor_critic.get_value(*storage.retrive_act_data(args.num_steps))
+            values = actor_critic.get_value(*storage.retrive_act_data(args.num_steps)).detach()
 
         storage.values_vec[:, -1] = values.numpy()
 
@@ -84,15 +83,10 @@ def main(args):
 
         storage.after_update()
 
-        i = num_update_ + 1
-
-        if i * args.num_steps % args.episode_length == 0:
-            episode += 1
-            print("Episode: {}, reward: {}".format(episode, rewards.mean()))
-
     env.close()
 
     torch.save(actor_critic.state_dict(), "test.pt")
+    print("end")
 
 
 if __name__ == '__main__':
@@ -103,17 +97,17 @@ if __name__ == '__main__':
 
     parser.add_argument("--env_name", type=str, default="MountainCarContinuous-v0")
 
-    parser.add_argument("--num_workers", type=int, default=8)
+    parser.add_argument("--num_workers", type=int, default=4)
 
-    parser.add_argument("--num_steps", type=int, default=10)
+    parser.add_argument("--num_steps", type=int, default=5)
 
-    parser.add_argument("--num_env_steps", type=int, default=1000000)
+    parser.add_argument("--num_env_steps", type=int, default=10000000)
 
     parser.add_argument("--base_nn", type=str, default="mlp")
 
     parser.add_argument("--lr", type=float, default=7e-4)
 
-    parser.add_argument("--mini_batch_size", type=int, default=32)
+    parser.add_argument("--mini_batch_size", type=int, default=5)
 
     parser.add_argument("--clip_eps", type=float, default=0.2)
 
@@ -121,11 +115,11 @@ if __name__ == '__main__':
 
     parser.add_argument("--entropy_coef", type=float, default=0.01)
 
-    parser.add_argument("--update_epochs", type=int, default=5)
+    parser.add_argument("--update_epochs", type=int, default=4)
 
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
 
-    parser.add_argument("--episode_length", type=int, default=1000)
+    # parser.add_argument("--episode_length", type=int, default=1000)
 
     parser.add_argument("--log_file", type=str, default="/home/catsled/RL/log/1.log")
 
