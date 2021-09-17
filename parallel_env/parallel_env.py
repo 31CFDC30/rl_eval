@@ -71,6 +71,10 @@ class PEnv(object):
               ):
         pipe.send(["step", action])
 
+    def close(self):
+        for pipe in self.pipe_list:
+            pipe.send(["close", None])
+
     def __len__(self):
         return len(self.pipe_list)
 
