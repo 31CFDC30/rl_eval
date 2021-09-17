@@ -29,6 +29,7 @@ class Storage(object):
 
         # 只有执行action才能获得reward
         self.actions_vec = np.zeros((num_workers, n_steps, *action_shape))
+
         self.rewards_vec = np.zeros((num_workers, n_steps, 1))
 
         # 这个log_prob可以通过.exp转换为prob.

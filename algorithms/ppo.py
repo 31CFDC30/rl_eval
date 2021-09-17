@@ -49,7 +49,6 @@ class PPO(object):
         :return:
         """
         storage.cal_returns(gamma, gae_lambda, storage.values_vec[:, -1])
-
         advantage_vec = storage.returns_vec[:, :-1] - storage.values_vec[:, :-1]
         # 标准化
         advantage_vec = (advantage_vec - advantage_vec.mean()) / (advantage_vec.std() + 1e-5)
@@ -60,7 +59,6 @@ class PPO(object):
             for sample in sample_generator:
                 obs_batch, hidden_states_batch, actions_batch, values_batch, returns_batch, masks_batch, \
                 old_action_log_probs_batch, advantages_batch = func_to(func_n2t(sample), device="0")
-
                 values, action_log_probs, dist_entropy, _ = self.actor_critic.evaluate_action(
                     obs_batch, hidden_states_batch, masks_batch, actions_batch
                 )

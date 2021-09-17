@@ -77,29 +77,37 @@ class PEnv(object):
 
 def worker(pipe, remote_pipe, env, eid):
 
-    def _step(env, action):
+    def _step(env, action, r):
         # 如果done为True，那么下一个ob没有任何作用
         # 这里假设done针对的是next_ob, reward是在当前状态下执行相应动作得到的，info也是针对next_ob的，即这里的ob
-        ob, reward, done, info = env.step(action)
+        try:
+            ob, reward, done, info = env.step(action)
+        except Exception as e:
+            ob, reward, done, info = env.step(action[0])
         if env._max_episode_steps == env._elapsed_steps:  # 超过最大步数
             info['bad_transition'] = True
+        r += reward
+
         if done:
             # 下一个ob，即初始状态是否可以为done？
             # 如果为done，那么我们要做的只是将对应的hidden_state置0， hidden_state*mask=0
             # 其他部分则不需要额外操作。
             # 如果为结束状态，那么其对应的v(s)应该为0，在计算时，此处的值可以丢弃，所以可以直接reset。
             ob = env.reset()
-        return ob, reward, done, info
+            info["reward"] = r
+            r = 0
+        return ob, reward, done, info, r
 
     remote_pipe.close()
     try:
+        r = 0
         while True:
             cmd, data = pipe.recv()
             if cmd == "reset":
                 ob = env.reset()
                 pipe.send((eid, ob))
             elif cmd == "step":
-                next_ob, reward, done, info = _step(env, data)
+                next_ob, reward, done, info, r = _step(env, data, r)
                 pipe.send((eid, [next_ob, reward, done, info]))
             elif cmd == "render":
                 env.render()

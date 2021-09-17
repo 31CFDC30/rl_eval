@@ -5,23 +5,47 @@ import torch
 import torch.nn as nn
 
 from utils.initn import func_init
-from torch.distributions import Normal, Categorical
+from torch.distributions import Normal
 
 from functools import reduce
 
 
-class AddBias(nn.Module):
-    def __init__(self, bias):
-        super(AddBias, self).__init__()
-        self._bias = nn.Parameter(bias.unsqueeze(1))
+class FixedCategorical(torch.distributions.Categorical):
+    def sample(self, sample_shape=torch.Size()):
+        return super().sample().unsqueeze(-1)
+
+    def log_probs(self, actions):
+        return (
+            super()
+            .log_prob(actions.squeeze(-1))
+            .view(actions.size(0), -1)
+            .sum(-1)
+            .unsqueeze(-1)
+        )
+
+    def mode(self):
+        return self.probs.argmax(dim=-1, keepdim=True)
+
+
+class Categorical(nn.Module):
+
+    def __init__(self,
+                 input_shape: tuple,
+                 output_shape: tuple
+                 ):
+        super(Categorical, self).__init__()
+        init_ = lambda m: func_init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0.),
+                                    nn.init.calculate_gain("relu"))
+
+        self.input_size = reduce(lambda x, y: x * y, input_shape)
+        self.output_size = reduce(lambda x, y: x * y, output_shape)
+
+        self.action_fc = init_(nn.Linear(self.input_size, self.output_size))
 
     def forward(self, x):
-        if x.dim() == 2:
-            bias = self._bias.t().view(1, -1)
-        else:
-            bias = self._bias.t().view(1, -1, 1, 1)
-
-        return x + bias
+        x = x.view(-1, self.input_size)
+        action = self.action_fc(x)
+        return FixedCategorical(logits=action)
 
 
 class FixedNormal(Normal):
@@ -56,17 +80,17 @@ class Gaussian(nn.Module):
 
         self.action_mean_fc = init_(nn.Linear(self.input_size, self.output_size))
 
-        # self.action_logstd = nn.Parameter(torch.zeros(self.output_size), requires_grad=True)
-        self.action_logstd = AddBias(torch.zeros(self.output_size))
+        self.action_logstd = nn.Parameter(torch.zeros(self.output_size), requires_grad=True)
+        # self.action_logstd = AddBias(torch.zeros(self.output_size))
 
     def forward(self, x):
 
         x = x.view(-1, self.input_size)
 
         action_mean = self.action_mean_fc(x)
-        zeros = torch.zeros(action_mean.size())
-        action_logstd = self.action_logstd(zeros)
-        return FixedNormal(action_mean, action_logstd.exp())
+        # zeros = torch.zeros(action_mean.size())
+        # action_logstd = self.action_logstd(zeros)
+        return FixedNormal(action_mean, self.action_logstd.exp())
 
 
 if __name__ == '__main__':
@@ -74,6 +98,7 @@ if __name__ == '__main__':
 
     output_shape = (1, )
 
-    dist = Gaussian(tuple(inputs.shape[1:]), output_shape)
+    # dist = Gaussian(tuple(inputs.shape[1:]), output_shape)
+    dist = Categorical(tuple(inputs.shape[1:]), output_shape)
 
     print(dist(inputs).sample())

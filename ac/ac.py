@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 from models.mlp import MLP
-from distributions.distributions import Gaussian
+from distributions.distributions import Gaussian, Categorical
 
 
 class AC(nn.Module):
@@ -34,6 +34,8 @@ class AC(nn.Module):
 
         if action_type == "continue":
             self.dist = Gaussian(hidden_feature_shape, action_shape)
+        elif action_type == "discrete":
+            self.dist = Categorical(hidden_feature_shape, action_shape)
         else:
             raise NotImplemented
 
@@ -46,7 +48,6 @@ class AC(nn.Module):
             action = dist.mode()
         else:  # 不确定性策略
             action = dist.sample()
-
         log_probs = dist.log_probs(action)
 
         return value, action, h_n, log_probs
