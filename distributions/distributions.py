@@ -73,23 +73,21 @@ class Gaussian(nn.Module):
         super(Gaussian, self).__init__()
 
         init_ = lambda m: func_init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0.),
-                                    nn.init.calculate_gain("relu"))
+                                    nn.init.calculate_gain("tanh"))
 
         self.input_size = reduce(lambda x, y: x*y, input_shape)
         self.output_size = reduce(lambda x, y: x*y, output_shape)
 
         self.action_mean_fc = init_(nn.Linear(self.input_size, self.output_size))
 
-        self.action_logstd = nn.Parameter(torch.zeros(self.output_size), requires_grad=True)
-        # self.action_logstd = AddBias(torch.zeros(self.output_size))
+        self.action_logstd = nn.Parameter(torch.randn(self.output_size), requires_grad=True)
 
     def forward(self, x):
 
         x = x.view(-1, self.input_size)
 
         action_mean = self.action_mean_fc(x)
-        # zeros = torch.zeros(action_mean.size())
-        # action_logstd = self.action_logstd(zeros)
+
         return FixedNormal(action_mean, self.action_logstd.exp())
 
 

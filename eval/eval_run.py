@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--env_name", type=str, default="CartPole-v0")
-
+    # parser.add_argument("--env_name", type=str, default="MountainCarContinuous-v0")
     parser.add_argument("--base_nn", type=str, default="mlp")
 
     args = parser.parse_args()

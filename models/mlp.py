@@ -53,10 +53,11 @@ class MLP(nn.Module):
         h_n = h_n.squeeze(0)
 
         x = self.fc1(hidden_x)
-        x = F.relu(x)
+        # x = F.relu(x)
+        x = torch.tanh(x)
         x = self.fc2(x)
-        x = F.relu(x)
-
+        # x = F.relu(x)
+        x = torch.tanh(x)
         value = self.value_head(x)
 
         return x, h_n, value

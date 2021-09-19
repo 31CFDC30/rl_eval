@@ -61,7 +61,6 @@ def main(args):
         for step_ in range(args.num_steps):  # 对应storage大小
             with torch.no_grad():  # 采样, h_n 为当前状态的h_n
                 values, actions, h_ns, log_probs = actor_critic.act(*storage.retrive_act_data(step_))
-
             next_obs, rewards, dones, infos = envs.step(actions.numpy())  # 这里的数据已经排序完成
 
             masks = np.array([0. if done else 1. for done in dones])
@@ -105,20 +104,20 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    # parser.add_argument("--env_name", type=str, default="MountainCarContinuous-v0")
-    parser.add_argument("--env_name", type=str, default="CartPole-v0")
+    parser.add_argument("--env_name", type=str, default="MountainCarContinuous-v0")
+    # parser.add_argument("--env_name", type=str, default="CartPole-v0")
 
     parser.add_argument("--num_workers", type=int, default=4)
 
-    parser.add_argument("--num_steps", type=int, default=5)
+    parser.add_argument("--num_steps", type=int, default=20)
 
-    parser.add_argument("--num_env_steps", type=int, default=100000)
+    parser.add_argument("--num_env_steps", type=int, default=20000000)
 
     parser.add_argument("--base_nn", type=str, default="mlp")
 
     parser.add_argument("--lr", type=float, default=5e-4)
 
-    parser.add_argument("--mini_batch_size", type=int, default=5)
+    parser.add_argument("--mini_batch_size", type=int, default=8)
 
     parser.add_argument("--clip_eps", type=float, default=0.2)
 
