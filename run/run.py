@@ -28,7 +28,7 @@ def main(args):
 
     hidden_state_shape = obs_shape
 
-    hidden_feature_shape = tuple(map(lambda x: x*2, obs_shape))
+    hidden_feature_shape = tuple(map(lambda x: x*3, obs_shape))
 
     actor_critic = AC(args.base_nn, obs_shape, hidden_state_shape, hidden_feature_shape,
                       action_space_shape, action_type)
@@ -90,7 +90,9 @@ def main(args):
 
         if r_list:
             r_nd = np.array(r_list)
-            print("max reward: {}, min reward: {}, mean reward: {}".format(r_nd.max(), r_nd.min(), r_nd.mean()))
+            print("Update times: {}, max reward: {}, min reward: {}, mean reward: {}".format(
+                (num_update_+1), r_nd.max(), r_nd.min(), r_nd.mean())
+            )
 
     envs.close()
 
@@ -109,7 +111,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--num_workers", type=int, default=4)
 
-    parser.add_argument("--num_steps", type=int, default=20)
+    parser.add_argument("--num_steps", type=int, default=10)
 
     parser.add_argument("--num_env_steps", type=int, default=20000000)
 
@@ -117,13 +119,13 @@ if __name__ == '__main__':
 
     parser.add_argument("--lr", type=float, default=5e-4)
 
-    parser.add_argument("--mini_batch_size", type=int, default=8)
+    parser.add_argument("--mini_batch_size", type=int, default=10)
 
     parser.add_argument("--clip_eps", type=float, default=0.2)
 
     parser.add_argument("--critic_coef", type=float, default=0.5)
 
-    parser.add_argument("--entropy_coef", type=float, default=0.1)
+    parser.add_argument("--entropy_coef", type=float, default=0.01)
 
     parser.add_argument("--update_epochs", type=int, default=4)
 
