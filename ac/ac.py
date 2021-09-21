@@ -4,7 +4,7 @@
 import torch
 import torch.nn as nn
 
-from models.mlp import MLP
+from models.mlp import MLP, MLP2
 from distributions.distributions import Gaussian, Categorical
 
 
@@ -28,7 +28,8 @@ class AC(nn.Module):
         """
         super(AC, self).__init__()
         if base_nn == "mlp":
-            self.base_nn = MLP(obs_shape, hidden_state_shape, hidden_feature_shape)
+            # self.base_nn = MLP(obs_shape, hidden_state_shape, hidden_feature_shape)
+            self.base_nn = MLP2(obs_shape, hidden_state_shape, hidden_feature_shape)
         else:
             raise NotImplemented
 

@@ -26,7 +26,7 @@ def main(args):
     env = func_generate_env(args.env_name)
     hidden_state_shape = ob_shape
 
-    hidden_feature_shape = tuple(map(lambda x: x*2, ob_shape))
+    hidden_feature_shape = tuple(map(lambda x: x*6, ob_shape))
 
     actor_critic = AC(args.base_nn, ob_shape, hidden_state_shape, hidden_feature_shape,
                       action_space_shape, action_type)
@@ -42,7 +42,7 @@ def main(args):
             ob = torch.from_numpy(ob)
             value, action, h_n, log_prob = actor_critic.act(ob.float(), h_n, torch.ones(1))
 
-            next_ob, reward, done, info = env.step(action.numpy()[0][0])  # 这里的数据已经排序完成
+            next_ob, reward, done, info = env.step(action.numpy())  # 这里的数据已经排序完成
 
             ob = next_ob
             h_n = h_n[0]
@@ -62,8 +62,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--env_name", type=str, default="CartPole-v0")
-    # parser.add_argument("--env_name", type=str, default="MountainCarContinuous-v0")
+    # parser.add_argument("--env_name", type=str, default="CartPole-v0")
+    parser.add_argument("--env_name", type=str, default="MountainCarContinuous-v0")
     parser.add_argument("--base_nn", type=str, default="mlp")
 
     args = parser.parse_args()

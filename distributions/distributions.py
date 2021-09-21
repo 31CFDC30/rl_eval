@@ -35,7 +35,7 @@ class Categorical(nn.Module):
                  ):
         super(Categorical, self).__init__()
         init_ = lambda m: func_init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0.),
-                                    nn.init.calculate_gain("relu"))
+                                    nn.init.calculate_gain("tanh"))
 
         self.input_size = reduce(lambda x, y: x * y, input_shape)
         self.output_size = reduce(lambda x, y: x * y, output_shape)
@@ -80,7 +80,7 @@ class Gaussian(nn.Module):
 
         self.action_mean_fc = init_(nn.Linear(self.input_size, self.output_size))
 
-        self.action_logstd = nn.Parameter(torch.randn(self.output_size), requires_grad=True)
+        self.action_logstd = nn.Parameter(torch.zeros(self.output_size))
 
     def forward(self, x):
 

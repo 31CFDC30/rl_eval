@@ -71,6 +71,13 @@ class PEnv(object):
               ):
         pipe.send(["step", action])
 
+    def seed(self):
+        for pipe in self.pipe_list:
+            pipe.send(["seed", None])
+
+        for pipe in self.pipe_list:
+            pipe.recv()
+
     def close(self):
         for pipe in self.pipe_list:
             pipe.send(["close", None])
@@ -115,6 +122,9 @@ def worker(pipe, remote_pipe, env, eid):
                 pipe.send((eid, [next_ob, reward, done, info]))
             elif cmd == "render":
                 env.render()
+                pipe.send((eid, None))
+            elif cmd == "seed":
+                env.seed(eid)
                 pipe.send((eid, None))
             elif cmd == "close":
                 pipe.close()

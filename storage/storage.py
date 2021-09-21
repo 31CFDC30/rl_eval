@@ -68,12 +68,12 @@ class Storage(object):
 
         self.step = (self.step+1) % self.max_step
 
-    def retrive_act_data(self, step):
+    def retrive_act_data(self, step, device):
         obs = self.obs_vec[:, step]
         hidden_state = self.hidden_states_vec[:, step]
         mask = self.masks_vec[:, step]
 
-        return func_n2t((obs, hidden_state, mask))
+        return func_n2t((obs, hidden_state, mask), device)
 
     def after_update(self):
         self.obs_vec[:, 0] = self.obs_vec[:, -1]
@@ -109,10 +109,11 @@ class Storage(object):
 
     def sample_generator(self,
                          advantages_vec: np.ndarray,
-                         mini_batch_size: int
+                         num_mini_batch: int
                          ):
 
         samples_size = self.num_workers * self.max_step
+        mini_batch_size = samples_size // num_mini_batch
 
         sampler = BatchSampler(
             SubsetRandomSampler(range(samples_size)),
