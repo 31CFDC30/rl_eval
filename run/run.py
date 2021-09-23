@@ -64,6 +64,7 @@ def main(args):
         for step_ in range(args.num_steps):  # 对应storage大小
             with torch.no_grad():  # 采样, h_n 为当前状态的h_n
                 values, actions, h_ns, log_probs = actor_critic.act(*storage.retrive_act_data(step_, device))
+
             next_obs, rewards, dones, infos = envs.step(actions.cpu().numpy())  # 这里的数据已经排序完成
 
             masks = np.array([0. if done else 1. for done in dones])
@@ -101,9 +102,11 @@ def main(args):
                     (num_update_+1), r_nd.max(), r_nd.min(), r_nd.mean())
             )
 
+        if num_update_ == args.save_interval:
+            torch.save(actor_critic.state_dict(), save_path)
+
     envs.close()
 
-    torch.save(actor_critic.state_dict(), save_path)
     print("done")
 
 
@@ -120,7 +123,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--num_steps", type=int, default=5)
 
-    parser.add_argument("--num_env_steps", type=int, default=10000000)
+    parser.add_argument("--num_env_steps", type=int, default=1000000)
 
     parser.add_argument("--base_nn", type=str, default="mlp")
 
@@ -143,6 +146,8 @@ if __name__ == '__main__':
     parser.add_argument("--alg", type=str, default="ppo")
 
     parser.add_argument("--device", type=str, default="0")
+
+    parser.add_argument("--save_interval", type=int, default=1000)
 
     args = parser.parse_args()
 

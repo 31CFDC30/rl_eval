@@ -95,15 +95,11 @@ def worker(pipe, remote_pipe, env, eid):
             ob, reward, done, info = env.step(action)
         except Exception as e:
             ob, reward, done, info = env.step(action[0])
-        if env._max_episode_steps == env._elapsed_steps:  # 超过最大步数
+        if env._max_episode_steps == env._elapsed_steps and done:
             info['bad_transition'] = True
         r += reward
 
-        if done:
-            # 下一个ob，即初始状态是否可以为done？
-            # 如果为done，那么我们要做的只是将对应的hidden_state置0， hidden_state*mask=0
-            # 其他部分则不需要额外操作。
-            # 如果为结束状态，那么其对应的v(s)应该为0，在计算时，此处的值可以丢弃，所以可以直接reset。
+        if done and env._max_episode_steps != env._elapsed_steps:
             ob = env.reset()
             info["reward"] = r
             r = 0

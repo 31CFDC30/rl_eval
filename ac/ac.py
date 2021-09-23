@@ -29,7 +29,7 @@ class AC(nn.Module):
         super(AC, self).__init__()
         if base_nn == "mlp":
             # self.base_nn = MLP(obs_shape, hidden_state_shape, hidden_feature_shape)
-            self.base_nn = MLP2(obs_shape, hidden_state_shape, hidden_feature_shape)
+            self.base_nn = MLP(obs_shape, hidden_state_shape, hidden_feature_shape)
         else:
             raise NotImplemented
 

@@ -101,9 +101,12 @@ class Storage(object):
             delta = self.rewards_vec[:, step_] + \
                     gamma * self.values_vec[:, step_+1] * self.masks_vec[:, step_+1] - self.values_vec[:, step_]
 
+            delta = self.rewards_vec[:, step_] + \
+                    gamma * self.values_vec[:, step_+1] - self.values_vec[:, step_]
+
             # 此处的masks作用是分离终止状态处的delta。
             gae = delta + gamma * gae_lambda * gae * self.masks_vec[:, step_+1]
-            gae = gae * self.bad_masks_vec[:, step_+1]
+            # gae = gae * self.bad_masks_vec[:, step_+1]
             # 此处的returns即为A+V,其中gae为A
             self.returns_vec[:, step_] = gae + self.values_vec[:, step_]
 
