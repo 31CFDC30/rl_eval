@@ -64,10 +64,10 @@ class PEnv(object):
         done_list = []
         info_list = []
         for i in range(len(datae_list)):
-            next_ob_list.append(datae_list[1][0])
-            reward_list.append(datae_list[1][1])
-            done_list.append(datae_list[1][2])
-            info_list.append(datae_list[1][3])
+            next_ob_list.append(datae_list[i][0])
+            reward_list.append(datae_list[i][1])
+            done_list.append(datae_list[i][2])
+            info_list.append(datae_list[i][3])
 
         return np.array(next_ob_list), np.array(reward_list), np.array(done_list), np.array(info_list)
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
         obs, rewards, dones, infos = envs.step(actions)
 
-        print(dones)
+        print(obs)
 
 
 
